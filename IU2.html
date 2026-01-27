@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IU2 - Separação (Mobile)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- SCANNER TRAP -->
+    <input type="text" id="scannerTrap" class="scanner-trap" autocomplete="off" inputmode="none">
+
+    <!-- MOBILE MOCKUP -->
+    <div class="mobile-mockup">
+        <div class="status-bar-mockup">
+            <span id="clock-mockup">10:27</span>
+            <div style="display: flex; gap: 6px;">
+                <i class="bi bi-wifi"></i>
+                <i class="bi bi-battery-full"></i>
+            </div>
+        </div>
+
+        <div class="app-screen-content">
+            <!-- TELA PRINCIPAL -->
+            <div class="work-card" id="tela-principal">
+                <div class="segmented-progress-wrapper">
+                    <div class="segments-container" id="segmentsContainer">
+                        <!-- Segmentos renderizados via JS -->
+                    </div>
+                    <div class="progress-info">
+                        <span class="step-name-display" id="stepNameDisplay">Separação</span>
+                        <span class="step-counter" id="stepCounterDisplay">2/7</span>
+                    </div>
+                </div>
+
+                <hr style="margin: 10px 0; border-top: 1px solid #eee;">
+
+                <h4>Separação (Guarda)</h4>
+
+                <!-- PILLS DE STATUS -->
+                <div style="margin: 10px 0 20px 0; display: flex; gap: 8px;">
+                    <span class="status-pill" id="pillOS">O.S pendente</span>
+                    <span class="status-pill" id="pillCracha">Crachá pendente</span>
+                </div>
+
+                <!-- MENSAGEM DE ERRO -->
+                <div id="msgErro" class="msg-erro">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="txtErro">Erro</span>
+                </div>
+
+                <!-- 3 OPÇÕES DE ENTRADA -->
+                <div class="action-buttons-grid" id="opcoesEntrada">
+                    <div class="btn-action-mode active" onclick="setOpMode('camera', this)">
+                        <i class="bi bi-camera"></i>
+                        <span>Câmera</span>
+                    </div>
+                    <div class="btn-action-mode" onclick="setOpMode('digitar', this)">
+                        <i class="bi bi-keyboard"></i>
+                        <span>Digitar</span>
+                    </div>
+                    <div class="btn-action-mode" onclick="setOpMode('leitor', this)">
+                        <i class="bi bi-upc-scan"></i>
+                        <span>Leitor</span>
+                    </div>
+                </div>
+
+                <!-- ÁREA DE LEITURA (APARECE APENAS NO INÍCIO) -->
+                <div id="areaLeitura" class="dashed-area"
+                    style="min-height: 80px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 15px;">
+                    <i class="bi bi-upc-scan" style="font-size: 24px; color: var(--cor-secundaria);"></i>
+                    <span style="margin-top: 10px;">Aguardando leitura O.S...</span>
+                </div>
+
+                <!-- LISTA DE O.S (INICIALMENTE ESCONDIDA) -->
+                <div id="areaLista" style="display: none;">
+                    <div class="list-header">
+                        <span class="label-passo" style="font-size: 12px; margin: 0; font-weight: 700;">O.S LIDAS</span>
+                        <span style="font-size: 11px; color: var(--cor-secundaria);" id="contadorItens">0</span>
+                    </div>
+
+                    <div class="dashed-area" id="containerLista">
+                        <div id="msgVazio" style="text-align: center; margin-top: 40px; color: #ccc; font-size: 12px;">
+                            Nenhuma O.S bipada
+                        </div>
+                        <div id="listaConteudo" style="width: 100%; display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- BOTÃO PARA IDENTIFICAR RESPONSÁVEL -->
+                <button class="btn-white-big" id="btnIdentificar" onclick="identificarResponsavel()" disabled>
+                    <i class="bi bi-person-badge"></i>
+                    <span>Identificar Responsável</span>
+                </button>
+
+                <!-- BOTÃO INICIAR SEPARAÇÃO -->
+                <button class="btn-green-block" id="btnIniciar" onclick="iniciarSeparacao()" disabled>Iniciar
+                    Separação</button>
+
+                <!-- ÁREA DE CONFIRMAÇÃO (APARECE APÓS INICIAR) -->
+                <div id="areaConfirmacao" class="confirmation-box">
+                    <input type="checkbox" id="checkConferencia" class="custom-checkbox"
+                        onchange="liberarBotaoFinalizar()">
+                    <label for="checkConferencia" class="confirmation-label">
+                        Declaro que a separação física de todos os volumes vinculados foi realizada e conferida
+                        visualmente.
+                    </label>
+                </div>
+
+                <!-- BOTÃO FINALIZAR SEPARAÇÃO -->
+                <button class="btn-outline-red" id="btnFinalizar" onclick="finalizarSeparacao()" style="display: none;"
+                    disabled>
+                    Finalizar Separação
+                </button>
+            </div>
+
+            <!-- TELA DE SUCESSO -->
+            <div id="tela-sucesso" class="work-card" style="display: none;">
+                <div class="success-internal-container">
+                    <div
+                        style="width: 70px; height: 70px; background: var(--cor-principal); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <i class="bi bi-check-lg" style="font-size: 40px; color: white;"></i>
+                    </div>
+                    <h4 style="margin-bottom: 5px;">Separação Concluída!</h4>
+                    <p style="font-size: 13px; color: var(--cor-off); margin-bottom: 20px;">
+                        O lote foi registrado e encaminhado para a etapa de Conferência.
+                    </p>
+
+                    <div class="report-box"
+                        style="background: var(--cor-bg-item); border: 1px solid var(--cor-borda); padding: 15px; width: 100%; border-radius: 8px; text-align: left; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--cor-off); font-size: 13px;">Total O.S</span>
+                            <strong id="resumoTotal" style="color: #333;">0</strong>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                            <span style="color: var(--cor-off); font-size: 13px;">Responsável</span>
+                            <strong id="resumoResponsavel" style="color: var(--cor-secundaria);">-</strong>
+                        </div>
+                    </div>
+
+                    <button class="btn-white-big" onclick="location.reload()">Nova Separação</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM SHEET PARA DIGITAÇÃO -->
+        <div id="bottomSheet" class="bottom-sheet-overlay">
+            <div class="bottom-sheet">
+                <span style="font-size: 14px; font-weight: 700; color: #333; display: block; margin-bottom: 12px;">
+                    Digite o código
+                </span>
+                <input type="text" id="bsInput" class="bs-input" autocomplete="off" placeholder="Digite a O.S..."
+                    style="font-size: 15px; text-transform: uppercase;">
+                <button class="btn-green-block" onclick="confirmarDigitacao()" style="margin-top: 5px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO DE ÁUDIO ---
+        const audioSuccess = new Audio("audio/beep.mp3");
+        const audioError = new Audio("audio/erro.mp3");
+
+        function playSound(type) {
+            try {
+                if (type === 'success') {
+                    audioSuccess.currentTime = 0;
+                    audioSuccess.play().catch(() => console.log('Autoplay blocked'));
+                } else if (type === 'error') {
+                    audioError.currentTime = 0;
+                    audioError.play().catch(() => console.log('Autoplay blocked'));
+                }
+            } catch (e) {
+                console.error("Erro ao tocar áudio", e);
+            }
+        }
+
+        // --- ESTADO GLOBAL ---
+        let listaOS = [];
+        let modoDigitacaoAtivo = false;
+        let responsavel = null;
+        let primeiraLeituraFeita = false;
+        let separacaoIniciada = false;
+        const etapas = [
+            "Atribuição",
+            "Separação",
+            "Conferência",
+            "Paletização",
+            "Carga",
+            "Transporte",
+            "Entrega"
+        ];
+
+
+        // ELEMENTOS DOM
+        const scannerTrap = document.getElementById('scannerTrap');
+        const bottomSheet = document.getElementById('bottomSheet');
+        const bsInput = document.getElementById('bsInput');
+        const contadorItens = document.getElementById('contadorItens');
+        const pillOS = document.getElementById('pillOS');
+        const pillCracha = document.getElementById('pillCracha');
+        const btnIdentificar = document.getElementById('btnIdentificar');
+        const btnIniciar = document.getElementById('btnIniciar');
+        const btnFinalizar = document.getElementById('btnFinalizar');
+        const areaLeitura = document.getElementById('areaLeitura');
+        const areaLista = document.getElementById('areaLista');
+        const areaConfirmacao = document.getElementById('areaConfirmacao');
+        const checkConferencia = document.getElementById('checkConferencia');
+
+        // INICIALIZAÇÃO
+        window.onload = () => {
+            updateClockMockup();
+            setInterval(updateClockMockup, 1000);
+            renderProgress();
+            focarScanner();
+        };
+
+        function updateClockMockup() {
+            const now = new Date();
+            document.getElementById('clock-mockup').innerText =
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+
+        function renderProgress() {
+            const container = document.getElementById('segmentsContainer');
+            container.innerHTML = '';
+
+            etapas.forEach((_, index) => {
+                const seg = document.createElement('div');
+                seg.classList.add('segment');
+
+                if (index < 1) seg.classList.add('completed'); // etapas anteriores
+                else if (index === 1) seg.classList.add('active'); // Separação
+
+                container.appendChild(seg);
+            });
+
+            document.getElementById('stepNameDisplay').innerText = etapas[1];
+            document.getElementById('stepCounterDisplay').innerText = `2/${etapas.length}`;
+        }
+
+
+        // --- CAPTURA DE LEITURA (SCANNER TRAP) ---
+        scannerTrap.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const val = scannerTrap.value.trim().toUpperCase();
+                scannerTrap.value = '';
+                if (!val) return;
+                processarLeitura(val);
+            }
+        });
+
+        function focarScanner() {
+            if (!modoDigitacaoAtivo && !separacaoIniciada) {
+                scannerTrap.focus();
+            }
+        }
+
+        // --- LÓGICA DE LEITURA ---
+        function processarLeitura(codigo) {
+            if (separacaoIniciada) {
+                mostrarErro("Separação em andamento");
+                return;
+            }
+
+            if (codigo.length < 2) {
+                mostrarErro("Código inválido");
+                playSound('error');
+                return;
+            }
+
+            // Verificar se já existe
+            if (listaOS.includes(codigo)) {
+                mostrarErro("O.S já bipada");
+                playSound('error');
+                return;
+            }
+
+            // Adicionar à lista
+            listaOS.push(codigo);
+            playSound('success');
+
+            // Se for a primeira leitura, esconde área de leitura e mostra lista
+            if (!primeiraLeituraFeita) {
+                primeiraLeituraFeita = true;
+                areaLeitura.style.display = 'none';
+                areaLista.style.display = 'block';
+            }
+
+            atualizarLista();
+            focarScanner();
+        }
+
+        function atualizarLista() {
+            const divConteudo = document.getElementById('listaConteudo');
+            const msgVazio = document.getElementById('msgVazio');
+            const container = document.getElementById('containerLista');
+
+            contadorItens.innerText = listaOS.length;
+
+            // Atualizar pill de O.S
+            if (listaOS.length > 0) {
+                pillOS.classList.add('check');
+                pillOS.innerText = `${listaOS.length} O.S bipada${listaOS.length > 1 ? 's' : ''}`;
+            } else {
+                pillOS.classList.remove('check');
+                pillOS.innerText = "O.S pendente";
+            }
+
+            // Habilitar botões se houver O.S
+            btnIdentificar.disabled = listaOS.length === 0;
+            btnIniciar.disabled = listaOS.length === 0;
+
+            if (listaOS.length === 0) {
+                msgVazio.style.display = 'block';
+                divConteudo.style.display = 'none';
+                return;
+            }
+
+            msgVazio.style.display = 'none';
+            divConteudo.style.display = 'block';
+
+            let html = '';
+            listaOS.forEach((os, index) => {
+                const isLast = index === listaOS.length - 1;
+                html += `
+                    <div class="os-item ${isLast ? 'current' : ''}" style="height:36px;">
+                        <div class="os-left">
+                            <span class="os-caixa">${os}</span>
+                        </div>
+                        <button class="btn-remove" onclick="removerOS(${index})"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                `;
+            });
+            divConteudo.innerHTML = html;
+
+            // Scroll automático
+            if (listaOS.length > 4) {
+                setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+            }
+        }
+
+        function removerOS(index) {
+            if (separacaoIniciada) return;
+
+            listaOS.splice(index, 1);
+            atualizarLista();
+            focarScanner();
+
+            // Se remover todas as O.S, volta para estado inicial
+            if (listaOS.length === 0) {
+                primeiraLeituraFeita = false;
+                areaLeitura.style.display = 'flex';
+                areaLista.style.display = 'none';
+                responsavel = null;
+                pillCracha.classList.remove('check');
+                pillCracha.innerText = "Crachá pendente";
+                btnIdentificar.disabled = true;
+                btnIdentificar.classList.remove('active-scan');
+                btnIdentificar.innerHTML = `<i class="bi bi-person-badge"></i><span>Identificar Responsável</span>`;
+                btnIniciar.disabled = true;
+            }
+        }
+
+        // --- IDENTIFICAÇÃO DO RESPONSÁVEL ---
+        function identificarResponsavel() {
+            if (separacaoIniciada) return;
+
+            // Simulação de leitura de crachá
+            const operadores = ["OPERADOR 01", "OPERADOR 02", "OPERADOR 03"];
+            const operador = operadores[Math.floor(Math.random() * operadores.length)];
+
+            responsavel = operador;
+            pillCracha.classList.add('check');
+            pillCracha.innerText = `Responsável: ${operador}`;
+
+            btnIdentificar.classList.add('active-scan');
+            btnIdentificar.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${operador}`;
+
+            // Habilitar botão de iniciar
+            btnIniciar.disabled = listaOS.length === 0 || !responsavel;
+
+            playSound('success');
+        }
+
+        // --- INICIAR SEPARAÇÃO ---
+        function iniciarSeparacao() {
+            if (listaOS.length === 0) {
+                mostrarErro("Bipe ao menos 1 O.S");
+                playSound('error');
+                return;
+            }
+
+            if (!responsavel) {
+                mostrarErro("Identifique o responsável");
+                playSound('error');
+                return;
+            }
+
+            separacaoIniciada = true;
+
+            // Atualizar UI
+            btnIniciar.innerHTML = '<i class="bi bi-hourglass-split"></i> Separação em Andamento...';
+            btnIniciar.disabled = true;
+            btnIniciar.style.backgroundColor = '#ccc';
+
+            // Mostrar área de confirmação
+            areaConfirmacao.style.display = 'flex';
+            btnFinalizar.style.display = 'block';
+
+            // Desabilitar inputs
+            document.querySelectorAll('#opcoesEntrada .btn-action-mode').forEach(btn => {
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+            });
+
+            playSound('success');
+        }
+
+        function liberarBotaoFinalizar() {
+            if (checkConferencia.checked) {
+                btnFinalizar.disabled = false;
+                btnFinalizar.style.opacity = "1";
+            } else {
+                btnFinalizar.disabled = true;
+                btnFinalizar.style.opacity = "0.5";
+            }
+        }
+
+        // --- FINALIZAR SEPARAÇÃO (CORRIGIDA) ---
+        function finalizarSeparacao() {
+            console.log("finalizarSeparacao chamada");
+
+            // Verificar pré-requisitos
+            if (!separacaoIniciada) {
+                console.log("Erro: Separação não iniciada");
+                mostrarErro("Separação não foi iniciada");
+                playSound('error');
+                return;
+            }
+
+            if (!checkConferencia.checked) {
+                console.log("Erro: Checkbox não marcado");
+                mostrarErro("Marque a confirmação de conferência");
+                playSound('error');
+                return;
+            }
+
+            if (listaOS.length === 0) {
+                console.log("Erro: Lista de O.S vazia");
+                mostrarErro("Nenhuma O.S foi bipada");
+                playSound('error');
+                return;
+            }
+
+            if (!responsavel) {
+                console.log("Erro: Responsável não identificado");
+                mostrarErro("Identifique o responsável primeiro");
+                playSound('error');
+                return;
+            }
+
+            // Feedback visual imediato
+            console.log("Atualizando UI...");
+            btnFinalizar.innerHTML = '<i class="bi bi-hourglass-split"></i> Finalizando...';
+            btnFinalizar.disabled = true;
+            btnFinalizar.style.opacity = "0.7";
+
+            // Simular processamento
+            setTimeout(() => {
+                console.log("Exibindo tela de sucesso...");
+
+                // Ocultar tela principal
+                const telaPrincipal = document.getElementById('tela-principal');
+                if (telaPrincipal) {
+                    telaPrincipal.style.display = 'none';
+                    console.log("Tela principal ocultada");
+                }
+
+                // Exibir tela de sucesso
+                const telaSucesso = document.getElementById('tela-sucesso');
+                if (telaSucesso) {
+                    telaSucesso.style.display = 'block';
+
+                    const successContainer = telaSucesso.querySelector('.success-internal-container');
+                    if (successContainer) {
+                        successContainer.style.display = 'flex';
+                    }
+
+                    console.log("Tela de sucesso exibida");
+                }
+
+                // Atualizar dados do resumo
+                const resumoTotal = document.getElementById('resumoTotal');
+                const resumoResponsavel = document.getElementById('resumoResponsavel');
+
+                if (resumoTotal) {
+                    resumoTotal.innerText = listaOS.length;
+                    console.log("Resumo total atualizado:", listaOS.length);
+                }
+
+                if (resumoResponsavel) {
+                    resumoResponsavel.innerText = responsavel;
+                    console.log("Resumo responsável atualizado:", responsavel);
+                }
+
+                // Feedback final
+                playSound('success');
+                console.log("Processo finalizado com sucesso!");
+
+                // ⏱️ Redireciona automaticamente para IU3 (Conferência)
+                setTimeout(() => {
+                    window.location.href = 'iu3.html';
+                }, 2000);
+
+            }, 500);
+        }
+
+        // --- UTILITÁRIOS UI ---
+        function mostrarErro(msg) {
+            const el = document.getElementById('msgErro');
+            const txt = document.getElementById('txtErro');
+
+            el.className = 'msg-erro erro-permissao';
+            el.style.display = 'flex';
+            txt.innerText = msg;
+
+            setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+
+        function setOpMode(mode, btn) {
+            if (separacaoIniciada) return;
+
+            document.querySelectorAll('#opcoesEntrada .btn-action-mode').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            if (mode === 'digitar') {
+                ativarInputManual();
+            } else if (mode === 'camera') {
+                alert("Módulo de câmera acionado");
+                focarScanner();
+            } else {
+                focarScanner();
+            }
+        }
+
+        function ativarInputManual() {
+            if (separacaoIniciada) return;
+
+            modoDigitacaoAtivo = true;
+            bottomSheet.style.display = 'flex';
+            bsInput.value = '';
+            setTimeout(() => bsInput.focus(), 150);
+        }
+
+        function confirmarDigitacao() {
+            const val = bsInput.value.trim().toUpperCase();
+            if (!val) return;
+
+            bottomSheet.style.display = 'none';
+            modoDigitacaoAtivo = false;
+
+            processarLeitura(val);
+            focarScanner();
+        }
+
+        // EVENT LISTENERS
+        bsInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') confirmarDigitacao();
+        });
+
+        bottomSheet.addEventListener('click', (e) => {
+            if (e.target === bottomSheet) {
+                bottomSheet.style.display = 'none';
+                modoDigitacaoAtivo = false;
+                focarScanner();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IU4 - Paletização (Mobile)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <input type="text" id="scannerTrap" class="scanner-trap" autocomplete="off" inputmode="none">
+
+    <div class="mobile-mockup">
+        <div class="status-bar-mockup">
+            <span id="clock-mockup">10:45</span>
+            <div style="display: flex; gap: 6px;">
+                <i class="bi bi-wifi"></i>
+                <i class="bi bi-battery-full"></i>
+            </div>
+        </div>
+
+        <div class="app-screen-content">
+            <div class="work-card" id="tela-principal">
+                <div class="segmented-progress-wrapper">
+                    <div class="segments-container" id="segmentsContainer">
+                    </div>
+                    <div class="progress-info">
+                        <span class="step-name-display" id="stepNameDisplay">Paletização</span>
+                        <span class="step-counter" id="stepCounterDisplay">4/7</span>
+                    </div>
+                </div>
+
+                <hr style="margin: 10px 0; border-top: 1px solid #eee;">
+
+                <h4>Paletização (Montagem)</h4>
+
+                <div style="margin: 10px 0 20px 0; display: flex; gap: 8px;">
+                    <span class="status-pill check" id="pillOS">O.S Confirmada</span>
+                    <span class="status-pill" id="pillPalete">Sem Palete</span>
+                    <span class="status-pill" id="pillItens">0/3 Itens</span>
+                </div>
+
+                <div id="msgErro" class="msg-erro">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="txtErro">Erro</span>
+                </div>
+
+                <div class="action-buttons-grid" id="opcoesEntrada">
+                    <div class="btn-action-mode active" onclick="setOpMode('camera', this)">
+                        <i class="bi bi-camera"></i>
+                        <span>Câmera</span>
+                    </div>
+                    <div class="btn-action-mode" onclick="setOpMode('digitar', this)">
+                        <i class="bi bi-keyboard"></i>
+                        <span>Digitar</span>
+                    </div>
+                    <div class="btn-action-mode" onclick="setOpMode('leitor', this)">
+                        <i class="bi bi-upc-scan"></i>
+                        <span>Leitor</span>
+                    </div>
+                </div>
+
+                <div id="areaSetupPalete" style="display: block;">
+                    <div class="dashed-area"
+                        style="min-height: 80px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 25px;">
+                        <i class="bi bi-box-seam" style="font-size: 24px; color: var(--cor-secundaria);"></i>
+                        <span style="margin-top: 10px; font-weight: 600;">Bipe o código do Palete</span>
+                        <span style="font-size: 11px; color: #999;">para iniciar a montagem</span>
+                    </div>
+                </div>
+
+                <div id="areaExecucao" style="display: none;">
+
+                    <div class="palete-card">
+                        <div class="palete-info">
+                            <h5 id="lblPaleteId">PL-000</h5>
+                            <span id="lblPaleteStatus">Em montagem...</span>
+                        </div>
+                        <button class="btn-small-action" onclick="fecharPalete()">
+                            <i class="bi bi-check2-square"></i> Fechar
+                        </button>
+                    </div>
+
+                    <div class="list-header">
+                        <span class="label-passo" style="font-size: 12px; margin: 0; font-weight: 700;">ITENS PARA
+                            PALETIZAR</span>
+                    </div>
+
+                    <div class="dashed-area" id="containerLista">
+                        <div id="listaConteudo" style="width: 100%;">
+                        </div>
+                    </div>
+
+                    <div
+                        style="text-align: center; margin-top: 10px; color: #777; font-size: 12px; margin-bottom: 10px;">
+                        <i class="bi bi-info-circle"></i> Bipe o item para associar ao palete
+                    </div>
+                </div>
+
+                <button class="btn-green-block" id="btnFinalizar" onclick="finalizarProcesso()" disabled
+                    style="margin-top: 10px;">
+                    Finalizar Paletização
+                </button>
+            </div>
+
+            <div id="tela-sucesso" class="work-card" style="display: none;">
+                <div class="success-internal-container" style="display: flex;">
+                    <div
+                        style="width: 100px; height: 100px; background: var(--cor-principal); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(39, 174, 97, 0.3);">
+                        <i class="bi bi-check-lg" style="font-size: 50px; color: white;"></i>
+                    </div>
+
+                    <h4 style="margin-bottom: 5px; font-size: 22px; color: #2c3e50;">Paletização OK!</h4>
+                    <p style="font-size: 14px; color: var(--cor-off); margin-bottom: 25px;">
+                        Todos os itens foram paletizados com sucesso e estão prontos para carga.
+                    </p>
+
+                    <div
+                        style="background: var(--cor-bg-item); border: 1px solid var(--cor-borda); padding: 20px; width: 90%; max-width: 400px; border-radius: 12px; text-align: left; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--cor-off); font-size: 14px;">Total Paletes</span>
+                            <strong id="resumoPaletes" style="color: #333;">0</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--cor-off); font-size: 14px;">Total Itens</span>
+                            <strong id="resumoItens" style="color: #333;">0</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--cor-off); font-size: 14px;">Operador</span>
+                            <strong style="color: var(--cor-principal);">JOÃO SILVA</strong>
+                        </div>
+                    </div>
+
+                    <button class="btn-white-big" onclick="window.location.reload()">Próxima Etapa</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="bottomSheet" class="bottom-sheet-overlay">
+            <div class="bottom-sheet">
+                <span style="font-size: 14px; font-weight: 700; color: #333; display: block; margin-bottom: 12px;">
+                    Digite o código
+                </span>
+                <input type="text" id="bsInput" class="bs-input" autocomplete="off" placeholder="..."
+                    style="font-size: 15px; text-transform: uppercase;">
+                <button class="btn-green-block" onclick="confirmarDigitacao()" style="margin-top: 5px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO DE ÁUDIO ---
+        const audioSuccess = new Audio("audio/beep.mp3");
+        const audioError = new Audio("audio/erro.mp3");
+
+        function playSound(type) {
+            try {
+                if (type === 'success') {
+                    audioSuccess.currentTime = 0;
+                    audioSuccess.play().catch(() => console.log('Autoplay blocked'));
+                } else if (type === 'error') {
+                    audioError.currentTime = 0;
+                    audioError.play().catch(() => console.log('Autoplay blocked'));
+                }
+            } catch (e) {
+                console.error("Erro ao tocar áudio", e);
+            }
+        }
+
+        // --- DADOS MOCKADOS (IU4) ---
+        // Lista de itens que vieram da etapa anterior (Conferência)
+        const MOCK_ITENS = [
+            { id: 'CB00305G10000002SOS', nome: 'Caixa Box', icon: 'bi-box-seam', status: 'pendente', palete: null },
+            { id: 'CX0012000000011SOS', nome: 'Caixa 20kg', icon: 'bi-box-seam-fill', status: 'pendente', palete: null },
+            { id: 'DC00120A0018854SOS', nome: 'Documentos', icon: 'bi-file-earmark-text', status: 'pendente', palete: null }
+        ];
+
+        // --- ESTADO GLOBAL ---
+        let state = 'WAITING_PALETE'; // 'WAITING_PALETE', 'PALETE_ACTIVE', 'FINISHED'
+        let activePaleteId = null;
+        let paletesFechados = [];
+        let modoDigitacaoAtivo = false;
+
+        const etapas = [
+            "Atribuição",
+            "Separação",
+            "Conferência",
+            "Paletização",
+            "Carga",
+            "Transporte",
+            "Entrega"
+        ];
+
+        // ELEMENTOS DOM
+        const scannerTrap = document.getElementById('scannerTrap');
+        const bottomSheet = document.getElementById('bottomSheet');
+        const bsInput = document.getElementById('bsInput');
+
+        // UI Zones
+        const areaSetupPalete = document.getElementById('areaSetupPalete');
+        const areaExecucao = document.getElementById('areaExecucao');
+        const listaConteudo = document.getElementById('listaConteudo');
+        const btnFinalizar = document.getElementById('btnFinalizar');
+
+        // Pills & Labels
+        const pillPalete = document.getElementById('pillPalete');
+        const pillItens = document.getElementById('pillItens');
+        const lblPaleteId = document.getElementById('lblPaleteId');
+        const lblPaleteStatus = document.getElementById('lblPaleteStatus');
+
+        // INICIALIZAÇÃO
+        window.onload = () => {
+            updateClockMockup();
+            setInterval(updateClockMockup, 1000);
+            renderProgress();
+            renderListaItens();
+            focarScanner();
+        };
+
+        function updateClockMockup() {
+            const now = new Date();
+            document.getElementById('clock-mockup').innerText =
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+
+        function renderProgress() {
+            const container = document.getElementById('segmentsContainer');
+            container.innerHTML = '';
+            etapas.forEach((_, index) => {
+                const seg = document.createElement('div');
+                seg.classList.add('segment');
+                if (index < 3) seg.classList.add('completed');
+                else if (index === 3) seg.classList.add('active');
+                container.appendChild(seg);
+            });
+        }
+
+        // --- CAPTURA DE LEITURA (SCANNER TRAP) ---
+        scannerTrap.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const val = scannerTrap.value.trim().toUpperCase();
+                scannerTrap.value = '';
+                if (!val) return;
+                processarLeitura(val);
+            }
+        });
+
+        function focarScanner() {
+            if (!modoDigitacaoAtivo && state !== 'FINISHED') {
+                scannerTrap.focus();
+            }
+        }
+
+        // --- LÓGICA PRINCIPAL ---
+        function processarLeitura(codigo) {
+
+            // 1. Lógica de Abrir Palete
+            if (state === 'WAITING_PALETE') {
+                abrirPalete(codigo);
+                return;
+            }
+
+            // 2. Lógica de Inserir Item no Palete
+            if (state === 'PALETE_ACTIVE') {
+                adicionarItemAoPalete(codigo);
+                return;
+            }
+        }
+
+        function abrirPalete(codigo) {
+            // Verifica se o código parece um palete (regra simples: > 3 chars e não é um item existente)
+            const isItem = MOCK_ITENS.find(i => i.id === codigo);
+            if (isItem) {
+                mostrarErro("Nenhum palete ativo. Bipe um palete primeiro.");
+                playSound('error');
+                return;
+            }
+
+            if (codigo.length < 3) {
+                mostrarErro("Código de palete inválido.");
+                playSound('error');
+                return;
+            }
+
+            // Ativa o palete
+            activePaleteId = codigo;
+            state = 'PALETE_ACTIVE';
+
+            // Atualiza UI
+            areaSetupPalete.style.display = 'none';
+            areaExecucao.style.display = 'block';
+
+            lblPaleteId.innerText = activePaleteId;
+            lblPaleteStatus.innerText = "Em montagem (0 itens)";
+
+            pillPalete.innerText = `Palete: ${activePaleteId}`;
+            pillPalete.classList.add('active-p');
+
+            playSound('success');
+            renderListaItens();
+        }
+
+        function adicionarItemAoPalete(codigo) {
+            const item = MOCK_ITENS.find(i => i.id === codigo);
+
+            if (!item) {
+                mostrarErro("Item não pertence à O.S.");
+                playSound('error');
+                return;
+            }
+
+            if (item.status === 'ok') {
+                mostrarErro("Item já paletizado.");
+                // Feedback visual no item específico
+                destacarItemErro(codigo);
+                playSound('error');
+                return;
+            }
+
+            // Sucesso: associa item
+            item.status = 'ok';
+            item.palete = activePaleteId;
+
+            playSound('success');
+            renderListaItens();
+            atualizarContadores();
+
+            // Scroll para o item
+            const row = document.getElementById(`row-${item.id}`);
+            if (row) row.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        function fecharPalete() {
+            // Verifica se tem itens no palete atual
+            const itensNestePalete = MOCK_ITENS.filter(i => i.palete === activePaleteId);
+
+            if (itensNestePalete.length === 0) {
+                mostrarErro("Palete vazio não pode ser fechado.");
+                playSound('error');
+                return;
+            }
+
+            // Adiciona aos fechados
+            paletesFechados.push({
+                id: activePaleteId,
+                qtd: itensNestePalete.length
+            });
+
+            // Reseta estado para pedir novo palete ou finalizar
+            activePaleteId = null;
+            state = 'WAITING_PALETE';
+
+            // UI Reset
+            pillPalete.innerText = "Sem Palete";
+            pillPalete.classList.remove('active-p');
+
+            areaExecucao.style.display = 'none';
+            areaSetupPalete.style.display = 'block';
+
+            // Verifica se acabou tudo
+            verificarConclusaoTotal();
+        }
+
+        function verificarConclusaoTotal() {
+            const pendentes = MOCK_ITENS.filter(i => i.status === 'pendente');
+
+            if (pendentes.length === 0) {
+                // Tudo finalizado
+                areaSetupPalete.style.display = 'none';
+                areaExecucao.style.display = 'block'; // Mostra lista para conferência visual final
+                document.querySelector('.palete-card').style.display = 'none'; // Esconde card de input
+                document.querySelector('.dashed-area').style.marginTop = '15px';
+
+                btnFinalizar.disabled = false;
+                // Muda texto de instrução
+                document.querySelector('#areaExecucao div i').parentNode.innerHTML = '<i class="bi bi-check-all"></i> Todos os itens foram paletizados.';
+            } else {
+                playSound('success'); // Som de confirmação do fechamento do palete
+            }
+        }
+
+        function renderListaItens() {
+            let html = '';
+
+            // Ordenar: itens do palete atual primeiro, depois pendentes, depois concluídos em outros paletes
+            const sortedItens = [...MOCK_ITENS].sort((a, b) => {
+                if (a.palete === activePaleteId && b.palete !== activePaleteId) return -1;
+                if (a.palete !== activePaleteId && b.palete === activePaleteId) return 1;
+                return 0;
+            });
+
+            sortedItens.forEach(item => {
+                const isChecked = item.status === 'ok';
+                const isCurrentPalete = item.palete === activePaleteId;
+
+                let rowClass = 'os-item';
+                let iconStatus = 'bi-circle';
+                let subtext = item.id;
+
+                if (isChecked) {
+                    rowClass += ' checked';
+                    iconStatus = 'bi-check-circle-fill';
+                    subtext = `Palete: ${item.palete}`;
+                }
+
+                // Se estivermos vendo lista global e o item for de OUTRO palete fechado, visual um pouco mais apagado
+                const opacity = (isChecked && !isCurrentPalete && activePaleteId) ? '0.6' : '1';
+
+                html += `
+                <div class="${rowClass}" id="row-${item.id}" style="opacity: ${opacity}">
+                    <div class="os-left">
+                        <i class="bi ${item.icon} item-icon"></i>
+                        <div class="os-caixa">
+                            <span>${item.nome}</span>
+                            <span class="os-subtext">${subtext}</span>
+                        </div>
+                    </div>
+                    <i class="bi ${iconStatus} status-icon" id="icon-${item.id}"></i>
+                </div>
+                `;
+            });
+
+            listaConteudo.innerHTML = html;
+            atualizarContadores();
+        }
+
+        function atualizarContadores() {
+            const total = MOCK_ITENS.length;
+            const conferidos = MOCK_ITENS.filter(i => i.status === 'ok').length;
+
+            pillItens.innerText = `${conferidos}/${total} Itens`;
+
+            if (activePaleteId) {
+                const noPaleteAtual = MOCK_ITENS.filter(i => i.palete === activePaleteId).length;
+                lblPaleteStatus.innerText = `Em montagem (${noPaleteAtual} itens)`;
+            }
+        }
+
+        function finalizarProcesso() {
+            state = 'FINISHED';
+
+            // Troca de telas
+            document.getElementById('tela-principal').style.display = 'none';
+            document.getElementById('tela-sucesso').style.display = 'block';
+
+            // Dados do resumo
+            document.getElementById('resumoPaletes').innerText = paletesFechados.length;
+            document.getElementById('resumoItens').innerText = MOCK_ITENS.length;
+
+            playSound('success');
+
+            // ⏱️ Aguarda 2 segundos e avança para IU5 (Carga)
+            setTimeout(() => {
+                window.location.href = 'iu5.html';
+            }, 2000);
+        }
+
+
+        // --- UTILITÁRIOS UI ---
+        function mostrarErro(msg) {
+            const el = document.getElementById('msgErro');
+            const txt = document.getElementById('txtErro');
+
+            el.className = 'msg-erro erro-permissao';
+            el.style.display = 'flex';
+            txt.innerText = msg;
+
+            setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+
+        function destacarItemErro(id) {
+            const el = document.getElementById(`row-${id}`);
+            if (el) {
+                el.classList.add('erro');
+                setTimeout(() => el.classList.remove('erro'), 500);
+            }
+        }
+
+        function setOpMode(mode, btn) {
+            document.querySelectorAll('#opcoesEntrada .btn-action-mode').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            if (mode === 'digitar') {
+                ativarInputManual();
+            } else if (mode === 'camera') {
+                alert("Módulo de câmera acionado");
+                focarScanner();
+            } else {
+                focarScanner();
+            }
+        }
+
+        function ativarInputManual() {
+            if (state === 'FINISHED') return;
+            modoDigitacaoAtivo = true;
+            bottomSheet.style.display = 'flex';
+            bsInput.value = '';
+
+            let placeholder = "...";
+            if (state === 'WAITING_PALETE') placeholder = "Digite cód. Palete...";
+            if (state === 'PALETE_ACTIVE') placeholder = "Digite cód. Item...";
+
+            bsInput.placeholder = placeholder;
+            setTimeout(() => bsInput.focus(), 150);
+        }
+
+        function confirmarDigitacao() {
+            const val = bsInput.value.trim().toUpperCase();
+            if (!val) return;
+
+            bottomSheet.style.display = 'none';
+            modoDigitacaoAtivo = false;
+
+            processarLeitura(val);
+            focarScanner();
+        }
+
+        // EVENT LISTENERS
+        bsInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') confirmarDigitacao();
+        });
+
+        bottomSheet.addEventListener('click', (e) => {
+            if (e.target === bottomSheet) {
+                bottomSheet.style.display = 'none';
+                modoDigitacaoAtivo = false;
+                focarScanner();
+            }
+        });
+    </script>
+</body>
+
+</html>

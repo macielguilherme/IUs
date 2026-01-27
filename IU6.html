@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IU6 - Auditoria de Saída (Transportador)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* A única regra específica deste layout que não está no global */
+        .step-label {
+            font-size: 11px;
+            color: var(--cor-off);
+            font-weight: 700;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-transform: uppercase;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="text" id="scannerTrap" class="scanner-trap" autocomplete="off" inputmode="none">
+
+    <div class="mobile-mockup">
+        <div class="status-bar-mockup">
+            <span id="clock-mockup">11:15</span>
+            <div style="display: flex; gap: 6px;">
+                <i class="bi bi-wifi"></i>
+                <i class="bi bi-battery-full"></i>
+            </div>
+        </div>
+
+        <div class="app-screen-content">
+            <div class="work-card" id="tela-principal">
+
+                <div class="segmented-progress-wrapper">
+                    <div class="segments-container" id="segmentsContainer"></div>
+                    <div class="progress-info">
+                        <span class="step-name-display">Auditoria de Saída</span>
+                        <span class="step-counter">6/7</span>
+                    </div>
+                </div>
+
+                <hr style="margin: 10px 0; border-top: 1px solid #eee;">
+
+                <h4>Conferência de Transporte</h4>
+                <div style="font-size: 11px; color: var(--cor-off); margin-bottom: 15px;">
+                    1) Iniciar · 2) Motorista · 3) Paletes da Rota
+                </div>
+
+                <div style="margin: 10px 0 20px 0; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <span class="status-pill" id="pillMotorista">Motorista pendente</span>
+                    <span class="status-pill" id="pillPaletes" style="display:none;">0/0 Paletes</span>
+                </div>
+
+                <div id="msgErro" class="msg-erro">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="txtErro">Erro</span>
+                </div>
+
+                <div class="action-buttons-grid" id="opcoesEntrada">
+                    <div class="btn-action-mode active" onclick="setOpMode('camera', this)">
+                        <i class="bi bi-camera"></i>
+                        <span>Câmera</span>
+                    </div>
+                    <div class="btn-action-mode" onclick="setOpMode('digitar', this)">
+                        <i class="bi bi-keyboard"></i>
+                        <span>Digitar</span>
+                    </div>
+                    <div class="btn-action-mode" onclick="setOpMode('leitor', this)">
+                        <i class="bi bi-upc-scan"></i>
+                        <span>Leitor</span>
+                    </div>
+                </div>
+
+                <div id="step-start">
+                    <button class="btn-green-block" id="btn-iu6-start" onclick="avancarEtapa('MOTORISTA')">
+                        Iniciar Conf. Saída
+                    </button>
+                </div>
+
+                <div id="main-flow-container" style="margin-top: 20px;">
+
+                    <div style="margin-bottom: 12px; position: relative;">
+                        <div id="lblMotorista" class="step-label">
+                            1. Motorista / Transportador
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 12px; position: relative;">
+                        <div id="lblPaletes" class="step-label">
+                            2. Paletes da Rota
+                        </div>
+                    </div>
+
+                    <div id="area-paletes" style="display: none;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px; margin-top: 20px;">
+                            <div style="font-size: 11px; font-weight: 700; color: #555; margin:0;">
+                                PALETES CARREGADOS
+                            </div>
+                            <span class="step-name-display" style="color:var(--cor-secundaria);"
+                                id="iu6-palete-count">0/0</span>
+                        </div>
+
+                        <div class="dashed-area" id="iu6-palete-queue"
+                            style="min-height: 100px; max-height: 200px; overflow-y: auto;">
+                            <div id="placeholder-paletes"
+                                style="text-align: center; color: #999; font-size: 12px; margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <i class="bi bi-upc-scan" style="font-size:24px;"></i>
+                                <span>Bipe os paletes da carga...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="final-actions" style="margin-top: 25px; display: none;">
+                    <button class="btn-green-block" id="btn-finalizar-saida" onclick="finalizarSaida()" disabled>
+                        Finalizar Conf. Saída
+                    </button>
+                    <p style="text-align: center; font-size: 11px; color: #999; margin-top: 10px;">
+                        Ao finalizar, o status mudará para "Em Trânsito".
+                    </p>
+                </div>
+
+            </div>
+
+            <div id="tela-sucesso" class="work-card" style="display: none;">
+                <div class="success-internal-container"
+                    style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding-top: 40px;">
+
+                    <div
+                        style="width: 100px; height: 100px; background: var(--cor-principal); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(39, 174, 97, 0.3);">
+                        <i class="bi bi-check-lg" style="font-size: 50px; color: white;"></i>
+                    </div>
+
+                    <h4 style="margin-bottom: 5px; color: #2c3e50;">Sucesso!</h4>
+                    <p style="font-size: 14px; color: var(--cor-off); margin-bottom: 25px;">
+                        Auditoria finalizada. Carga liberada e em trânsito.
+                    </p>
+
+                    <div
+                        style="background: var(--cor-bg-item); border: 1px solid var(--cor-borda); padding: 20px; width: 90%; max-width: 400px; border-radius: 12px; text-align: left; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--cor-off); font-size: 14px;">Motorista</span>
+                            <strong id="resumoMotorista" style="color: #333;">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--cor-off); font-size: 14px;">Total Paletes</span>
+                            <strong id="resumoQtdPaletes" style="color: #333;">0</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--cor-off); font-size: 14px;">Novo Status</span>
+                            <strong style="color: var(--cor-secundaria);">EM TRÂNSITO</strong>
+                        </div>
+                    </div>
+
+                    <button class="btn-white-big" onclick="window.location.reload()">Nova Conferência</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="bottomSheet" class="bottom-sheet-overlay">
+            <div class="bottom-sheet">
+                <span style="font-size: 14px; font-weight: 700; color: #333; display: block; margin-bottom: 12px;">
+                    Digite o código
+                </span>
+                <input type="text" id="bsInput" class="bs-input" autocomplete="off" placeholder="..."
+                    style="font-size: 15px; text-transform: uppercase;">
+                <button class="btn-green-block" onclick="confirmarDigitacao()" style="margin-top: 5px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO DE ÁUDIO ---
+        const audioSuccess = new Audio("audio/beep.mp3");
+        const audioError = new Audio("audio/erro.mp3");
+
+        function playSound(type) {
+            try {
+                if (type === 'success') {
+                    audioSuccess.currentTime = 0;
+                    audioSuccess.play().catch(() => console.log('Autoplay blocked'));
+                } else if (type === 'error') {
+                    audioError.currentTime = 0;
+                    audioError.play().catch(() => console.log('Autoplay blocked'));
+                }
+            } catch (e) {
+                console.error("Erro ao tocar áudio", e);
+            }
+        }
+
+        // --- ESTADOS ---
+        const STEPS = {
+            IDLE: 0,
+            WAITING_DRIVER: 1,
+            WAITING_PALETES: 2,
+            FINISHED: 3
+        };
+        let currentStep = STEPS.IDLE;
+        let modoDigitacaoAtivo = false;
+
+        let motoristaLido = "";
+        let paletesLidos = [];
+
+        // --- DADOS MOCKADOS (ROTA ESPERADA) ---
+        const MOCK_ROTA_PALETES = [
+            { id: 'PLT1', destino: 'G1', status: 'pendente' },
+            { id: 'PLT2', destino: 'G2', status: 'pendente' },
+            { id: 'PLT3', destino: 'G14', status: 'pendente' }
+        ];
+
+        // --- ELEMENTOS DOM ---
+        const scannerTrap = document.getElementById('scannerTrap');
+        const bottomSheet = document.getElementById('bottomSheet');
+        const bsInput = document.getElementById('bsInput');
+
+        const pillMotorista = document.getElementById('pillMotorista');
+        const pillPaletes = document.getElementById('pillPaletes');
+
+        const lblMotorista = document.getElementById('lblMotorista');
+        const lblPaletes = document.getElementById('lblPaletes');
+        const areaPaletes = document.getElementById('area-paletes');
+        const btnFinalizar = document.getElementById('btn-finalizar-saida');
+
+        // --- INICIALIZAÇÃO ---
+        window.onload = () => {
+            renderProgress();
+            updateClock();
+            setInterval(updateClock, 1000);
+            focarScanner();
+        };
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-mockup').innerText =
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+
+        // Renderiza barra 6/10 (0 a 5 completed, 6 active)
+        function renderProgress() {
+            const container = document.getElementById('segmentsContainer');
+            const totalEtapas = 7;
+            container.innerHTML = '';
+            for (let i = 0; i < totalEtapas; i++) {
+                const seg = document.createElement('div');
+                seg.classList.add('segment');
+                if (i < 5) seg.classList.add('completed');
+                else if (i === 5) seg.classList.add('active');
+                container.appendChild(seg);
+            }
+        }
+
+        function focarScanner() {
+            if (!modoDigitacaoAtivo && currentStep !== STEPS.FINISHED) {
+                scannerTrap.focus();
+            }
+        }
+
+        // --- FLUXO DE NAVEGAÇÃO ---
+        function avancarEtapa(target) {
+            if (target === 'MOTORISTA') {
+                currentStep = STEPS.WAITING_DRIVER;
+
+                // Atualiza UI
+                document.getElementById('btn-iu6-start').style.display = 'none';
+
+                // Realça passo 1
+                lblMotorista.style.color = '#333';
+                lblMotorista.style.borderBottomColor = '#ccc';
+
+                mostrarToast("Bipe o crachá do motorista");
+                focarScanner();
+            }
+        }
+
+        // --- PROCESSAMENTO DE LEITURA ---
+        scannerTrap.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const val = scannerTrap.value.trim().toUpperCase();
+                scannerTrap.value = '';
+                if (val) processarInput(val);
+            }
+        });
+
+        function processarInput(codigo) {
+
+            // 1. LEITURA DE CRACHÁ
+            if (currentStep === STEPS.WAITING_DRIVER) {
+                // Simulação simples: qualquer código > 3 chars é aceito como crachá
+                if (codigo.length < 3) {
+                    mostrarErro("Crachá inválido");
+                    return;
+                }
+
+                motoristaLido = codigo;
+
+                // Atualiza Label Motorista
+                lblMotorista.innerHTML =
+                    `1. MOTORISTA: <span style="color:var(--cor-secundaria)">${codigo}</span> 
+                     <i class="bi bi-check-circle-fill" style="color: var(--cor-principal);"></i>`;
+                lblMotorista.style.borderBottomColor = 'var(--cor-principal)';
+                lblMotorista.style.borderBottomWidth = '2px';
+
+                // Atualiza Pill
+                pillMotorista.classList.add('check');
+                pillMotorista.innerText = "Motorista OK";
+
+                // Avança para Paletes
+                currentStep = STEPS.WAITING_PALETES;
+                areaPaletes.style.display = 'block';
+                document.getElementById('final-actions').style.display = 'block';
+
+                // Pill Paletes
+                pillPaletes.style.display = 'inline-block';
+                pillPaletes.innerText = `0/${MOCK_ROTA_PALETES.length} Paletes`;
+
+                // Realça passo 2
+                lblPaletes.style.color = '#333';
+                lblPaletes.style.borderBottomColor = 'var(--cor-secundaria)';
+
+                playSound('success');
+                mostrarToast("Agora bipe os paletes");
+
+                // 2. LEITURA DE PALETES
+            } else if (currentStep === STEPS.WAITING_PALETES) {
+
+                // Verifica se já foi lido
+                if (paletesLidos.includes(codigo)) {
+                    mostrarErro("Palete já bipado");
+                    return;
+                }
+
+                // Verifica se o palete pertence à rota (Mock)
+                const paleteValido = MOCK_ROTA_PALETES.find(p => p.id === codigo);
+
+                if (!paleteValido) {
+                    // Simulação: se não estiver no mock, erro de rota
+                    mostrarErro("Palete não pertence a esta rota/carga");
+                    return;
+                }
+
+                // Sucesso
+                paletesLidos.push(codigo);
+                adicionarPaleteNaLista(paleteValido);
+                atualizarContadorPaletes();
+
+                // Habilitar finalização se tiver pelo menos 1
+                if (paletesLidos.length > 0) {
+                    btnFinalizar.disabled = false;
+                }
+
+                // Se todos foram lidos, marcar label como completo
+                if (paletesLidos.length === MOCK_ROTA_PALETES.length) {
+                    lblPaletes.innerHTML =
+                        `2. PALETES: <span style="color:var(--cor-secundaria)">COMPLETO</span> 
+                     <i class="bi bi-check-circle-fill" style="color: var(--cor-principal);"></i>`;
+                    lblPaletes.style.borderBottomColor = 'var(--cor-principal)';
+                    lblPaletes.style.borderBottomWidth = '2px';
+
+                    pillPaletes.classList.add('check');
+                }
+
+                playSound('success');
+            }
+        }
+
+        function adicionarPaleteNaLista(palete) {
+            const queue = document.getElementById('iu6-palete-queue');
+            const placeholder = document.getElementById('placeholder-paletes');
+
+            if (placeholder) placeholder.style.display = 'none';
+
+            const div = document.createElement('div');
+            div.style.background = '#fff';
+            div.style.border = '1px solid #e0e0e0';
+            div.style.borderRadius = '8px';
+            div.style.padding = '10px 12px';
+            div.style.marginBottom = '6px';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.style.alignItems = 'center';
+            div.style.animation = 'fadeIn 0.3s';
+
+            div.innerHTML = `
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <div style="background:#eef6fc; padding:8px; border-radius:6px;">
+                        <i class="bi bi-box-seam" style="color:var(--cor-secundaria); font-size:16px;"></i>
+                    </div>
+                    <div>
+                        <strong style="color:#333; font-size:14px;">${palete.id}</strong>
+                        <div style="font-size:11px; color:#999;">Destino: ${palete.destino}</div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                     <i class="bi bi-check-circle-fill" style="color:var(--cor-principal); font-size:18px;"></i>
+                </div>
+            `;
+            queue.insertBefore(div, queue.firstChild);
+        }
+
+        function atualizarContadorPaletes() {
+            const count = document.getElementById('iu6-palete-count');
+            count.innerText = `${paletesLidos.length}/${MOCK_ROTA_PALETES.length}`;
+            pillPaletes.innerText = `${paletesLidos.length}/${MOCK_ROTA_PALETES.length} Paletes`;
+        }
+
+        function finalizarSaida() {
+            currentStep = STEPS.FINISHED;
+
+            // Troca de telas
+            document.getElementById('tela-principal').style.display = 'none';
+            document.getElementById('tela-sucesso').style.display = 'block';
+
+            // Preenche resumo
+            document.getElementById('resumoMotorista').innerText = motoristaLido;
+            document.getElementById('resumoQtdPaletes').innerText = paletesLidos.length;
+
+            playSound('success');
+            console.log("Auditoria de saída finalizada");
+
+            // ⏱️ Aguarda 2 segundos e avança para IU7
+            setTimeout(() => {
+                window.location.href = 'iu7.html';
+            }, 2000);
+        }
+
+
+        // --- UTILITÁRIOS UI ---
+        function mostrarErro(msg) {
+            const el = document.getElementById('msgErro');
+            const txt = document.getElementById('txtErro');
+            el.className = 'msg-erro erro-permissao';
+            el.style.display = 'flex';
+            txt.innerText = msg;
+            setTimeout(() => { el.style.display = 'none'; }, 2500);
+            playSound('error');
+        }
+
+        function mostrarToast(msg) {
+            // Reutiliza o estilo de erro mas com cor azul (hack simples para protótipo)
+            /* Em produção criariamos um toast real, aqui usamos alert ou console */
+            console.log("Toast:", msg);
+        }
+
+        // --- INPUT MANUAL ---
+        function setOpMode(mode, btn) {
+            // Remove estado ativo de todos
+            document.querySelectorAll('.btn-action-mode')
+                .forEach(b => b.classList.remove('active'));
+
+            // Se ainda não iniciou a conferência, ignora a ação
+            if (currentStep === STEPS.IDLE) {
+                focarScanner();
+                return;
+            }
+
+            // Ativa o botão clicado
+            if (btn) btn.classList.add('active');
+
+            // Ações por modo
+            if (mode === 'digitar') {
+                ativarInputManual();
+
+            } else if (mode === 'camera') {
+                // Protótipo: câmera simulada (sem aviso)
+                focarScanner();
+
+            } else if (mode === 'leitor') {
+                // Scanner físico
+                focarScanner();
+            }
+        }
+
+
+        function ativarInputManual() {
+            if (currentStep === STEPS.FINISHED) return;
+
+            modoDigitacaoAtivo = true;
+            bottomSheet.style.display = 'flex';
+            bsInput.value = '';
+
+            let placeholder = "...";
+            if (currentStep === STEPS.WAITING_DRIVER) placeholder = "Crachá do Motorista...";
+            else if (currentStep === STEPS.WAITING_PALETES) placeholder = "Código do Palete...";
+
+            bsInput.placeholder = placeholder;
+            setTimeout(() => bsInput.focus(), 150);
+        }
+
+        function confirmarDigitacao() {
+            const val = bsInput.value.trim().toUpperCase();
+            if (val) {
+                bottomSheet.style.display = 'none';
+                modoDigitacaoAtivo = false;
+                processarInput(val);
+            }
+        }
+
+        // Eventos Bottom Sheet
+        bsInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') confirmarDigitacao();
+        });
+
+        bottomSheet.addEventListener('click', (e) => {
+            if (e.target === bottomSheet) {
+                bottomSheet.style.display = 'none';
+                modoDigitacaoAtivo = false;
+                focarScanner();
+            }
+        });
+
+    </script>
+</body>
+
+</html>
