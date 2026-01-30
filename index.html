@@ -134,9 +134,10 @@
                     <!-- BOTÃO NOVA ATRIBUIÇÃO -->
                     <!-- BOTÃO NOVA ATRIBUIÇÃO -->
                     <button class="btn-white-big" style="width: 90%; max-width: 400px; margin-top: 10px;"
-                        onclick="window.location.href='iu2.html'">
-                        Nova Atribuição
-                    </button>
+    id="btnNovaAtribuicao">
+    Nova Atribuição
+</button>
+
 
                 </div>
             </div>
@@ -384,10 +385,7 @@
             // Feedback sonoro (opcional, mas padrão WMS)
             playSound('success');
 
-            // ⏱️ Aguarda 2 segundos e avança automaticamente
-            setTimeout(() => {
-                window.location.href = 'iu2.html';
-            }, 2000);
+            
         }
 
 
@@ -447,7 +445,14 @@
                 focarScanner();
             }
         });
+
+        // Redireciona diretamente quando clicar em "Nova Atribuição"
+document.getElementById('btnNovaAtribuicao').addEventListener('click', () => {
+    window.location.href = 'iu2.html';
+});
+
     </script>
 </body>
+
 
 </html>
